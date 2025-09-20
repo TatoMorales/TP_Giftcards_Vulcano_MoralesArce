@@ -1,0 +1,28 @@
+package org.udesa.tp_giftcards_vulcano_moralesarce.model;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class UserSessionTests {
+    private UserSession createValidUserSession(){
+        return new UserSession("Papu", "papuPass", Map.of("Papu", "papuPass"));
+    }
+
+    @Test public void test01CanCreateSessionWithValidCredentials(){
+        assertDoesNotThrow(()->createValidUserSession());
+    }
+    @Test public void test02CanNotCreateSessionWithInvalidCredentials(){
+        assertThrows(RuntimeException.class, ()->new UserSession("Sarf", "fingit", Map.of("Papu", "papuPass")));
+    }
+    @Test public void test03TokenExpiresFiveMinutesAfterCreation(){
+        UserSession userSession = createValidUserSession();
+        assertFalse(userSession.isValidAt(userSession.getCreationTime().plusMinutes(6)));
+    }
+    @Test public void test04TokenIsValidBeforeExpiration(){
+        UserSession userSession = createValidUserSession();
+        assertTrue(userSession.isValidAt(userSession.getCreationTime().plusMinutes(3)));
+    }
+}
