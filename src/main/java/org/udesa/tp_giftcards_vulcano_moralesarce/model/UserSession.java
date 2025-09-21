@@ -8,7 +8,8 @@ public class UserSession {
     private final String username;
     private final LocalDateTime creationTime;
     private final LocalDateTime expirationTime;
-    private HashMap<String, GiftCard> ownedGiftCards;
+    private final HashMap<String, GiftCard> ownedGiftCards;
+    private boolean expired;
 
     public static final String invalidCredentialsErrorDescription = "Invalid username or password";
 
@@ -18,6 +19,7 @@ public class UserSession {
         this.creationTime = LocalDateTime.now();
         this.expirationTime = creationTime.plusMinutes(5);
         this.ownedGiftCards = new HashMap<>();
+        this.expired = false;
     }
 
     private static void checkValidUser(String username, String password, Map<String, String> userDatabase) {
@@ -31,7 +33,13 @@ public class UserSession {
     public LocalDateTime getExpirationTime() { return expirationTime; }
 
     public boolean isValidAt(LocalDateTime moment) {
-        return !moment.isAfter(expirationTime);
+        if (expired) return false;
+
+        boolean stillValid = !moment.isAfter(expirationTime);
+        if (!stillValid) {
+            expired = true;
+        }
+        return stillValid;
     }
 
     public UserSession claimGiftCard(GiftCard giftCard) {
@@ -48,4 +56,3 @@ public class UserSession {
         return ownedGiftCards.get(id);
     }
 }
-
