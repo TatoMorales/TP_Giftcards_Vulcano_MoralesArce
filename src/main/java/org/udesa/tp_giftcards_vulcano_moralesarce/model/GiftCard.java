@@ -1,11 +1,8 @@
 package org.udesa.tp_giftcards_vulcano_moralesarce.model;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
-//import lombok.Getter;
+
 public class GiftCard {
     public static final String insufficientBalance = "Amount greater than balance";
     private final String id;

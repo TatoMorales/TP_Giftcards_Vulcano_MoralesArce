@@ -1,12 +1,14 @@
 package org.udesa.tp_giftcards_vulcano_moralesarce.model;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 public class UserSession {
     private final String username;
     private final LocalDateTime creationTime;
     private final LocalDateTime expirationTime;
+    private HashMap<String, GiftCard> ownedGiftCards;
 
     public static final String invalidCredentialsErrorDescription = "Invalid username or password";
 
@@ -15,6 +17,7 @@ public class UserSession {
         this.username = username;
         this.creationTime = LocalDateTime.now();
         this.expirationTime = creationTime.plusMinutes(5);
+        this.ownedGiftCards = new HashMap<>();
     }
 
     private static void checkValidUser(String username, String password, Map<String, String> userDatabase) {
@@ -29,6 +32,20 @@ public class UserSession {
 
     public boolean isValidAt(LocalDateTime moment) {
         return !moment.isAfter(expirationTime);
+    }
+
+    public UserSession claimGiftCard(GiftCard giftCard) {
+        ownedGiftCards.put(giftCard.getId(), giftCard);
+        return this;
+    }
+
+    public Map<String, GiftCard> listGiftCards() {
+        return ownedGiftCards;
+    }
+
+    public GiftCard findGiftCard(String id) {
+        if  (!ownedGiftCards.containsKey(id)) throw  new RuntimeException();
+        return ownedGiftCards.get(id);
     }
 }
 
