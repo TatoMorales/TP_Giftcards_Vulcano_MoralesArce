@@ -19,11 +19,11 @@ public class MerchantConfiguration {
         users.put("alice", "wonderland");
 
         Map<String, GiftCard> giftCards = new HashMap<>();
-        giftCards.put("GC-100", new GiftCard("GC-100", 5000f, new ArrayList<>()));
-        giftCards.put("GC-200", new GiftCard("GC-200", 2000f, new ArrayList<>()));
+        giftCards.put("GC-100", new GiftCard("GC-100", 5000f));
+        giftCards.put("GC-200", new GiftCard("GC-200", 2000f));
 
         // Preload sample card state so consumers can observe historic charges.
-        GiftCard preloaded = new GiftCard("GC-300", 3000f, new ArrayList<>());
+        GiftCard preloaded = new GiftCard("GC-300", 3000f);
         preloaded.charge("initial-setup", 200f, LocalDate.now().minusDays(3));
         giftCards.put(preloaded.getId(), preloaded);
 

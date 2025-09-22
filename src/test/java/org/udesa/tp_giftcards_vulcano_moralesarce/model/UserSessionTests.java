@@ -13,7 +13,7 @@ public class UserSessionTests {
         return new UserSession("Papu", "papuPass", Map.of("Papu", "papuPass"));
     }
     private GiftCard defaultGiftCard(){
-        return new GiftCard("dfsofnd", 50.0f, new ArrayList<Charge>());
+        return new GiftCard("dfsofnd", 50.0f);
     }
     @Test public void test01CanCreateSessionWithValidCredentials(){
         assertDoesNotThrow(()->createValidUserSession());

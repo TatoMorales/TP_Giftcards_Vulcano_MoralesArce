@@ -17,6 +17,7 @@ import org.udesa.tp_giftcards_vulcano_moralesarce.model.UserSession;
 
 @RestController
 @RequestMapping("/merchant")
+
 public class MerchantController {
 
     private final GiftCardSystemFacade giftCardSystemFacade;
@@ -27,7 +28,7 @@ public class MerchantController {
 
     @GetMapping(value = "/status", produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> status() {
-        return ResponseEntity.ok("qué mirá");
+        return ResponseEntity.ok("Service is up and running");
     }
 
     @PostMapping(value = "/payment", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

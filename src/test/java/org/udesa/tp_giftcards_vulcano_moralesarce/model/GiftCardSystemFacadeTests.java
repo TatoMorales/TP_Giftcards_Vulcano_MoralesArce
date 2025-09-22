@@ -1,47 +1,61 @@
 package org.udesa.tp_giftcards_vulcano_moralesarce.model;
 
+import org.apache.catalina.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.udesa.tp_giftcards_vulcano_moralesarce.model.GiftCardSystemFacade.alreadyRedeemedGiftCardError;
+import static org.udesa.tp_giftcards_vulcano_moralesarce.model.GiftCardSystemFacade.invalidGiftCardError;
 
 public class GiftCardSystemFacadeTests {
     GiftCardSystemFacade systemFacade;
+
+    private static String validUsername1 = "ElPapuVulcano";
+    private static String validPassword1 = "LaPapuPassword";
+    private static String validUsername2 = "LaCabraNitales";
+    private static String validPassword2 = "BroIsCooked";
 
     @BeforeEach
     public void beforeEach() {
         systemFacade = systemFacade();
     }
 
-    @Test
-    public void test01CanLoginWithValidUser() {
-        assertDoesNotThrow(() -> systemFacade.createSessionFor("Jhon", "Jpass"));
+    @Test public void test01CanLoginWithValidUser() {
+        systemFacade.login(validUsername1, validPassword1);
+        assertTrue(systemFacade.getExistingSessions().containsKey(validUsername1));
     }
 
-    @Test
-    public void test02CannotLoginWithInvalidUser() {
-        assertThrows(RuntimeException.class, () -> systemFacade.createSessionFor("George", "badPass"));
+    @Test public void test02CannotLoginWithInvalidUser() {
+        assertThrowsLike(() -> systemFacade.login("Emilio", "Oca"), UserSession.invalidCredentialsErrorDescription);
     }
 
-    @Test
-    public void test03UserCanClaimGiftCardThroughFacade() {
-        UserSession session = systemFacade.createSessionFor("Jhon", "Jpass");
-        GiftCard giftCard = new GiftCard("card123", 100.0f, new ArrayList<>());
-        systemFacade.addGiftCard(giftCard);
-
+    @Test public void test03UserCanClaimGiftCardThroughFacade() {
+        UserSession session = systemFacade.login(validUsername1, validPassword1);
+        systemFacade.addGiftCard(new GiftCard("card123", 100.0f));
         systemFacade.claimGiftCard(session, "card123");
-
         assertTrue(session.listGiftCards().containsKey("card123"));
     }
 
-    @Test
-    public void test04UserCanChargeGiftCardThroughFacade() {
+    @Test public void test04UserCanNotClaimUnexistingGiftCardThroughFacade() {
+        UserSession session = systemFacade.login(validUsername1, validPassword1);
+        assertThrowsLike(()->systemFacade.claimGiftCard(session, "card123"),  invalidGiftCardError);  //Es mejor hacer estos imports de variables estáticas?
+    }
+
+    @Test public void test05UserCanNotClaimRedeemedGiftCardThroughFacade() {
+        systemFacade.addGiftCard(new GiftCard("card123", 100.0f));
+        systemFacade.claimGiftCard(systemFacade.login(validUsername1, validPassword1), "card123");
+        UserSession session = systemFacade.login(validUsername2, validPassword2);
+        assertThrowsLike(()->systemFacade.claimGiftCard(session, "card123"), alreadyRedeemedGiftCardError);
+    }
+    @Test public void test06UserCanChargeGiftCardThroughFacade() {
         UserSession session = systemFacade.createSessionFor("Paul", "Ppass");
-        GiftCard giftCard = new GiftCard("cardABC", 50.0f, new ArrayList<>());
+        GiftCard giftCard = new GiftCard("cardABC", 50.0f);
         systemFacade.addGiftCard(giftCard);
 
         systemFacade.claimGiftCard(session, "cardABC");
@@ -50,10 +64,9 @@ public class GiftCardSystemFacadeTests {
         assertEquals(30.0f, session.findGiftCard("cardABC").getBalance());
     }
 
-    @Test
-    public void test05FacadeRejectsOperationsWithExpiredSession() {
+    @Test public void test05FacadeRejectsOperationsWithExpiredSession() {
         UserSession session = systemFacade.createSessionFor("Jhon", "Jpass");
-        GiftCard giftCard = new GiftCard("cardX", 40.0f, new ArrayList<>());
+        GiftCard giftCard = new GiftCard("cardX", 40.0f);
         systemFacade.addGiftCard(giftCard);
 
         // Forzar expiración
@@ -65,9 +78,12 @@ public class GiftCardSystemFacadeTests {
 
     private static GiftCardSystemFacade systemFacade() {
         return new GiftCardSystemFacade(
-                Map.of("Jhon", "Jpass", "Paul", "Ppass"),
+                Map.of(validUsername1, validPassword1, validUsername2, validPassword2),
                 Map.of()
         );
+    }
+    private static void assertThrowsLike(Executable executable, String message) {
+        assertEquals(message, assertThrows(Exception.class, executable).getMessage());
     }
 }
 

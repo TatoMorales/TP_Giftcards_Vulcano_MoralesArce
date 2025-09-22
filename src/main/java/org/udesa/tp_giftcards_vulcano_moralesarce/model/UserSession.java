@@ -6,10 +6,10 @@ import java.util.Map;
 
 public class UserSession {
     private final String username;
-    private final LocalDateTime creationTime;
-    private final LocalDateTime expirationTime;
+    private LocalDateTime creationTime;
+    private LocalDateTime expirationTime;
     private final HashMap<String, GiftCard> ownedGiftCards;
-    private boolean expired;
+    private Boolean expired;
 
     public static final String invalidCredentialsErrorDescription = "Invalid username or password";
 
@@ -54,5 +54,11 @@ public class UserSession {
     public GiftCard findGiftCard(String id) {
         if  (!ownedGiftCards.containsKey(id)) throw  new RuntimeException();
         return ownedGiftCards.get(id);
+    }
+
+    public void resetTime() {
+        expired = false;
+        creationTime = LocalDateTime.now();
+        expirationTime = creationTime.plusMinutes(5);
     }
 }

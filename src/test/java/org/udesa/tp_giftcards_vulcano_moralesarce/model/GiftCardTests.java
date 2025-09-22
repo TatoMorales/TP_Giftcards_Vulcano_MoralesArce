@@ -11,7 +11,7 @@ public class GiftCardTests {
     private float defaultInitialBalance = 6.5f;
 
     public GiftCard defaultGiftCard(){
-        return new GiftCard(defautId, defaultInitialBalance, new ArrayList<Charge>());
+        return new GiftCard(defautId, defaultInitialBalance);
     }
 
     @Test public void test01GiftCardStartsWithNoCharges(){
