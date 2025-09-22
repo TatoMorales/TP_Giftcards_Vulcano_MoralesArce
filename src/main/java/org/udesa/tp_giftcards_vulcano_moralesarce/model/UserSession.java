@@ -44,6 +44,7 @@ public class UserSession {
 
     public UserSession claimGiftCard(GiftCard giftCard) {
         ownedGiftCards.put(giftCard.getId(), giftCard);
+        giftCard.redeem();
         return this;
     }
 

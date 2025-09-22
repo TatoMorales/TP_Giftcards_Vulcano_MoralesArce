@@ -15,12 +15,14 @@ public class GiftCard {
         this.id = id;
         this.balance = balance;
         this.charges = new ArrayList<>();
+        this.redeemed = false;
     }
 
     public String getId() {return this.id;}
     public float getBalance(){ return this.balance; }
     public boolean hasNoCharges(){ return this.charges.isEmpty(); }
     public boolean isRedeemed(){ return this.redeemed; }
+    public void redeem(){ this.redeemed = true; }
 
     public GiftCard charge(String merchantId, float amount, LocalDate date){
         if (amount > balance)

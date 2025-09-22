@@ -6,12 +6,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.udesa.tp_giftcards_vulcano_moralesarce.model.GiftCardSystemFacade.alreadyRedeemedGiftCardError;
-import static org.udesa.tp_giftcards_vulcano_moralesarce.model.GiftCardSystemFacade.invalidGiftCardError;
+import static org.udesa.tp_giftcards_vulcano_moralesarce.model.GiftCardSystemFacade.*;
 
 public class GiftCardSystemFacadeTests {
     GiftCardSystemFacade systemFacade;
@@ -54,28 +54,25 @@ public class GiftCardSystemFacadeTests {
         assertThrowsLike(()->systemFacade.claimGiftCard(session, "card123"), alreadyRedeemedGiftCardError);
     }
     @Test public void test06UserCanChargeGiftCardThroughFacade() {
-        UserSession session = systemFacade.createSessionFor("Paul", "Ppass");
-        GiftCard giftCard = new GiftCard("cardABC", 50.0f);
-        systemFacade.addGiftCard(giftCard);
-
+        UserSession session = systemFacade.login(validUsername1, validPassword1);
+        systemFacade.addGiftCard(new GiftCard("cardABC", 50.0f));
         systemFacade.claimGiftCard(session, "cardABC");
         systemFacade.chargeGiftCard(session, "cardABC", "Nike", 20.0f, LocalDate.now());
-
         assertEquals(30.0f, session.findGiftCard("cardABC").getBalance());
     }
 
-    @Test public void test05FacadeRejectsOperationsWithExpiredSession() {
-        UserSession session = systemFacade.createSessionFor("Jhon", "Jpass");
-        GiftCard giftCard = new GiftCard("cardX", 40.0f);
-        systemFacade.addGiftCard(giftCard);
-
-        // Forzar expiración
+    @Test public void test07FacadeRejectsOperationsWithExpiredSession() {
+        UserSession session = systemFacade.login(validUsername1, validPassword1);
+        systemFacade.addGiftCard(new GiftCard("cardX", 40.0f));
         assertFalse(session.isValidAt(session.getCreationTime().plusMinutes(6)));
-
-        assertThrows(RuntimeException.class,
-                () -> systemFacade.claimGiftCard(session, "cardX"));
+        assertThrowsLike(() -> systemFacade.claimGiftCard(session, "cardX"), invalidSessionError);
     }
 
+    @Test public void test08FacadeCanRestartSession() {
+        UserSession session = systemFacade.login(validUsername1, validPassword1);
+        assertFalse(session.isValidAt(session.getCreationTime().plusMinutes(6)));
+        assertTrue(systemFacade.login(validUsername1, validPassword1).isValidAt(LocalDateTime.now()));
+    }
     private static GiftCardSystemFacade systemFacade() {
         return new GiftCardSystemFacade(
                 Map.of(validUsername1, validPassword1, validUsername2, validPassword2),
