@@ -1,5 +1,4 @@
 package org.udesa.tp_giftcards_vulcano_moralesarce.model;
-
 import org.apache.catalina.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,7 @@ public class GiftCardSystemFacadeTests {
     }
 
     @Test public void test01CanLoginWithValidUser() {
-        systemFacade.login(validUsername1, validPassword1);
+        loginAsValidUser1();
         assertTrue(systemFacade.getExistingSessions().containsKey(validUsername1));
     }
 
@@ -38,49 +37,66 @@ public class GiftCardSystemFacadeTests {
     }
 
     @Test public void test03UserCanClaimGiftCardThroughFacade() {
-        UserSession session = systemFacade.login(validUsername1, validPassword1);
-        systemFacade.addGiftCard(new GiftCard("card123", 100.0f));
-        systemFacade.claimGiftCard(session, "card123");
+        UserSession session = loginAsValidUser1();
+        addGiftCard("card123", 100.0f);
+        claimGiftCard(session, "card123");
         assertTrue(session.listGiftCards().containsKey("card123"));
     }
 
     @Test public void test04UserCanNotClaimUnexistingGiftCardThroughFacade() {
-        UserSession session = systemFacade.login(validUsername1, validPassword1);
-        assertThrowsLike(()->systemFacade.claimGiftCard(session, "card123"),  invalidGiftCardError);  //Es mejor hacer estos imports de variables estáticas?
+        UserSession session = loginAsValidUser1();
+        assertThrowsLike(() -> systemFacade.claimGiftCard(session, "card123"), invalidGiftCardError);  //Es mejor hacer estos imports de variables estáticas?
     }
 
     @Test public void test05UserCanNotClaimRedeemedGiftCardThroughFacade() {
-        systemFacade.addGiftCard(new GiftCard("card123", 100.0f));
-        systemFacade.claimGiftCard(systemFacade.login(validUsername1, validPassword1), "card123");
-        UserSession session = systemFacade.login(validUsername2, validPassword2);
-        assertThrowsLike(()->systemFacade.claimGiftCard(session, "card123"), alreadyRedeemedGiftCardError);
+        addGiftCard("card123", 100.0f);
+        claimGiftCard(loginAsValidUser1(), "card123");
+        UserSession session = loginAsValidUser2();
+        assertThrowsLike(() -> systemFacade.claimGiftCard(session, "card123"), alreadyRedeemedGiftCardError);
     }
     @Test public void test06UserCanChargeGiftCardThroughFacade() {
-        UserSession session = systemFacade.login(validUsername1, validPassword1);
-        systemFacade.addGiftCard(new GiftCard("cardABC", 50.0f));
-        systemFacade.claimGiftCard(session, "cardABC");
+        UserSession session = loginAsValidUser1();
+        addGiftCard("cardABC", 50.0f);
+        claimGiftCard(session, "cardABC");
         systemFacade.chargeGiftCard(session, "cardABC", "Nike", 20.0f, LocalDate.now());
         assertEquals(30.0f, session.findGiftCard("cardABC").getBalance());
     }
 
     @Test public void test07FacadeRejectsOperationsWithExpiredSession() {
-        UserSession session = systemFacade.login(validUsername1, validPassword1);
-        systemFacade.addGiftCard(new GiftCard("cardX", 40.0f));
+        UserSession session = loginAsValidUser1();
+        addGiftCard("cardX", 40.0f);
         assertFalse(session.isValidAt(session.getCreationTime().plusMinutes(6)));
         assertThrowsLike(() -> systemFacade.claimGiftCard(session, "cardX"), invalidSessionError);
     }
 
     @Test public void test08FacadeCanRestartSession() {
-        UserSession session = systemFacade.login(validUsername1, validPassword1);
+        UserSession session = loginAsValidUser1();
         assertFalse(session.isValidAt(session.getCreationTime().plusMinutes(6)));
-        assertTrue(systemFacade.login(validUsername1, validPassword1).isValidAt(LocalDateTime.now()));
+        assertTrue(loginAsValidUser1().isValidAt(LocalDateTime.now()));
     }
 
     @Test public void test09UnknownMerchantCanNotChargeGiftCardThroughFacade() {
-        UserSession session = systemFacade.login(validUsername1, validPassword1);
-        systemFacade.addGiftCard(new GiftCard("cardX", 40.0f));
-        assertThrowsLike(()->systemFacade.chargeGiftCard(session, "cardX", "RandomMerchantId", 25f, LocalDate.now()), unknownMerchantError);
+        UserSession session = loginAsValidUser1();
+        addGiftCard("cardX", 40.0f);
+        assertThrowsLike(() -> systemFacade.chargeGiftCard(session, "cardX", "RandomMerchantId", 25f, LocalDate.now()), unknownMerchantError);
     }
+
+    private UserSession loginAsValidUser1() {
+        return systemFacade.login(validUsername1, validPassword1);
+    }
+
+    private UserSession loginAsValidUser2() {
+        return systemFacade.login(validUsername2, validPassword2);
+    }
+
+    private void addGiftCard(String giftCardId, float balance) {
+        systemFacade.addGiftCard(new GiftCard(giftCardId, balance));
+    }
+
+    private void claimGiftCard(UserSession session, String giftCardId) {
+        systemFacade.claimGiftCard(session, giftCardId);
+    }
+
     private static GiftCardSystemFacade systemFacade() {
         return new GiftCardSystemFacade(
                 Map.of(validUsername1, validPassword1, validUsername2, validPassword2),
@@ -91,4 +107,3 @@ public class GiftCardSystemFacadeTests {
         assertEquals(message, assertThrows(Exception.class, executable).getMessage());
     }
 }
-

@@ -27,7 +27,7 @@ public class MerchantConfiguration {
         preloaded.charge("initial-setup", 200f, LocalDate.now().minusDays(3));
         giftCards.put(preloaded.getId(), preloaded);
 
-        List<String> merchants = List.of("Nike", "Kentucky Fried Chicken");
+        List<String> merchants = List.of("Nike", "Kentucky Fried Chicken", "tienda");
         return new GiftCardSystemFacade(users, giftCards, merchants);
     }
 }

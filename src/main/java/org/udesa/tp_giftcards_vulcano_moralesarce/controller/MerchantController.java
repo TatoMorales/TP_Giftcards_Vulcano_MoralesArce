@@ -36,8 +36,12 @@ public class MerchantController {
         try {
             validate(request);
 
-            UserSession session = giftCardSystemFacade.createSessionFor(request.username(), request.password());
-            giftCardSystemFacade.claimGiftCard(session, request.giftCardId());
+            UserSession session = giftCardSystemFacade.login(request.username(), request.password());
+
+            boolean giftCardAlreadyClaimed = session.listGiftCards().containsKey(request.giftCardId());
+            if (!giftCardAlreadyClaimed) {
+                giftCardSystemFacade.claimGiftCard(session, request.giftCardId());
+            }
 
             LocalDate chargeDate = request.chargeDate() != null ? request.chargeDate() : LocalDate.now();
             giftCardSystemFacade.chargeGiftCard(
@@ -90,6 +94,12 @@ public class MerchantController {
         }
         if (GiftCardSystemFacade.invalidGiftCardError.equals(message)) {
             return HttpStatus.NOT_FOUND;
+        }
+        if (GiftCardSystemFacade.unknownMerchantError.equals(message)) {
+            return HttpStatus.NOT_FOUND;
+        }
+        if (GiftCardSystemFacade.alreadyRedeemedGiftCardError.equals(message)) {
+            return HttpStatus.CONFLICT;
         }
         if (GiftCard.insufficientBalance.equals(message) || message.endsWith("required") || message.contains("greater than zero")) {
             return HttpStatus.BAD_REQUEST;
