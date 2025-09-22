@@ -108,7 +108,7 @@ class MerchantControllerTest {
 
     @Test void test06paymentFailsWhenRequiredFieldsAreMissing() throws Exception {
         MerchantController.PaymentRequest request = new MerchantController.PaymentRequest(
-                null, // falta usuario
+                null,
                 "secret",
                 "GC-100",
                 100f,

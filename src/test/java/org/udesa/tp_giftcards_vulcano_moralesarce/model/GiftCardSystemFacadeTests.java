@@ -8,6 +8,7 @@ import org.junit.jupiter.api.function.Executable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,6 +21,7 @@ public class GiftCardSystemFacadeTests {
     private static String validPassword1 = "LaPapuPassword";
     private static String validUsername2 = "LaCabraNitales";
     private static String validPassword2 = "BroIsCooked";
+    private static List<String> validMerchants =  List.of("Nike", "Kentucky Fried Chicken");
 
     @BeforeEach
     public void beforeEach() {
@@ -73,10 +75,16 @@ public class GiftCardSystemFacadeTests {
         assertFalse(session.isValidAt(session.getCreationTime().plusMinutes(6)));
         assertTrue(systemFacade.login(validUsername1, validPassword1).isValidAt(LocalDateTime.now()));
     }
+
+    @Test public void test09UnknownMerchantCanNotChargeGiftCardThroughFacade() {
+        UserSession session = systemFacade.login(validUsername1, validPassword1);
+        systemFacade.addGiftCard(new GiftCard("cardX", 40.0f));
+        assertThrowsLike(()->systemFacade.chargeGiftCard(session, "cardX", "RandomMerchantId", 25f, LocalDate.now()), unknownMerchantError);
+    }
     private static GiftCardSystemFacade systemFacade() {
         return new GiftCardSystemFacade(
                 Map.of(validUsername1, validPassword1, validUsername2, validPassword2),
-                Map.of()
+                Map.of(), validMerchants
         );
     }
     private static void assertThrowsLike(Executable executable, String message) {
