@@ -8,12 +8,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 import org.udesa.giftcards.model.*;
-import org.udesa.giftcards.service.GiftCardService; // Si lo pones en otro paquete
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,17 +25,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 public class GiftCardControllerTest {
 
-    @Autowired MockMvc mockMvc;
-    @MockBean Clock clock;
+    @Autowired private MockMvc mockMvc;
+    @MockBean private Clock clock;
 
-    // Inyectamos los servicios reales para configurar el estado de la DB
-    @Autowired UserService userService;
-    @Autowired GiftCardService giftCardService;
+    // Inyecto los servicios reales para configurar el estado de la DB
+    @Autowired private UserService userService;
+    @Autowired private GiftCardService giftCardService;
 
-    @BeforeEach
-    public void beforeEach() {
+    @BeforeEach public void beforeEach() {
         when(clock.now()).then(it -> LocalDateTime.now());
         // Opcional: limpiar DB si no usas @Transactional en el test o H2 en memoria
     }
@@ -65,12 +64,8 @@ public class GiftCardControllerTest {
     @Test public void test03CanRedeemGiftCard() throws Exception {
         registerUser("aUser", "aPass");
         createCard("card1", 1000);
-
         String token = loginAndGetToken("aUser", "aPass");
-
         redeem(token, "card1");
-
-        // Verificamos balance vía API
         Map<String, Object> balanceMap = balance(token, "card1");
         assertEquals(1000, balanceMap.get("balance"));
     }
@@ -89,8 +84,7 @@ public class GiftCardControllerTest {
         redeemFailing(tokenB, "card1");
     }
 
-    @Test
-    public void test05CanChargeCard() throws Exception {
+    @Test public void test05CanChargeCard() throws Exception {
         registerUser("aUser", "aPass");
         createCard("card1", 1000);
         // Asumimos que los merchants están pre-cargados o validados de otra forma,

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 public class GiftCardTest {
 
     @Test public void aSimpleCard() {
-        assertEquals( 10, newCard().balance() );
+        assertEquals( 10, newCard().getBalance() );
     }
 
     @Test public void aSimpleIsNotOwnedCard() {
@@ -19,22 +19,22 @@ public class GiftCardTest {
     @Test public void cannotChargeUnownedCards() {
         GiftCard aCard = newCard();
         assertThrows( RuntimeException.class, () -> aCard.charge( 2, "Un cargo" ) );
-        assertEquals( 10, aCard.balance() );
-        assertTrue( aCard.charges().isEmpty() );
+        assertEquals( 10, aCard.getBalance() );
+        assertTrue( aCard.getCharges().isEmpty() );
     }
 
     @Test public void chargeACard() {
         GiftCard aCard = newCard();
         aCard.redeem( "Bob" );
         aCard.charge( 2, "Un cargo" );
-        assertEquals( 8, aCard.balance() );
-        assertEquals( "Un cargo", aCard.charges().getLast() );
+        assertEquals( 8, aCard.getBalance() );
+        assertEquals( "Un cargo", aCard.getCharges().getLast() );
     }
 
     @Test public void cannotOverrunACard() {
         GiftCard aCard = newCard();
         assertThrows( RuntimeException.class, () -> aCard.charge( 11, "Un cargo" ) );
-        assertEquals( 10, aCard.balance() );
+        assertEquals( 10, aCard.getBalance() );
     }
 
     private GiftCard newCard() {
