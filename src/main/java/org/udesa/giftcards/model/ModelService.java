@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+@Transactional(readOnly = true)
 public abstract class ModelService <M extends ModelEntity, R extends JpaRepository<M, Long>> {
     @Autowired protected R repository;
 
@@ -32,10 +33,12 @@ public abstract class ModelService <M extends ModelEntity, R extends JpaReposito
         return repository.findById( id ).orElseGet( supplier );
     }
 
+    @Transactional
     public M save( M model ) {
         return repository.save( model );
     }
 
+    @Transactional
     public M update( Long id, M updatedObject ) {
         M object = getById( id );
         updateData( object, updatedObject );
@@ -53,10 +56,12 @@ public abstract class ModelService <M extends ModelEntity, R extends JpaReposito
         return repository.count();
     }
 
+    @Transactional
     public void delete( long id ) {
         repository.deleteById( id );
     }
 
+    @Transactional
     public void delete( M model ) {
         repository.delete( model );
     }

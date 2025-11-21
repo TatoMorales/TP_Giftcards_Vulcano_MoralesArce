@@ -20,6 +20,7 @@ public class GiftCardFacade {
     // o podrías crear una entidad Session y un SessionRepository si te piden persistencia total.
     private Map<UUID, UserSession> sessions = new HashMap<>();
 
+    @Transactional(readOnly = true)
     public UUID login(String userKey, String pass) {
         // 1. Usamos UserService para buscar en DB
         UserVault user = userService.findByName(userKey);
@@ -45,6 +46,7 @@ public class GiftCardFacade {
         // Al ser @Transactional, el cambio se guarda solo al salir del método
     }
 
+    @Transactional(readOnly = true)
     public int balance(UUID token, String cardId) {
         GiftCard card = giftCardService.findByCardId(cardId);
         validateOwnership(token, card);
@@ -57,6 +59,7 @@ public class GiftCardFacade {
         card.charge(amount, description);
     }
 
+    @Transactional(readOnly = true)
     public List<String> details(UUID token, String cardId) {
         GiftCard card = giftCardService.findByCardId(cardId);
         validateOwnership(token, card);

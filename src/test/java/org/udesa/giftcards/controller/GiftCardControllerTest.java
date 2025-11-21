@@ -50,18 +50,18 @@ public class GiftCardControllerTest {
         return giftCardService.save(new GiftCard(businessId, initialBalance));
     }
 
-    @Test public void test01CanLoginWithValidUser() throws Exception {
+    @Test public void canLoginWithValidUser() throws Exception {
         registerUser("aUser", "aPass");
         Map<String, Object> response = login("aUser", "aPass");
         assertNotNull(response.get("token"));
     }
 
-    @Test public void test02CanNotLoginWithInvalidUser() throws Exception {
+    @Test public void loginFailsWithInvalidUser() throws Exception {
         // No registramos el usuario
         loginFailing("InvalidUser", "aPass");
     }
 
-    @Test public void test03CanRedeemGiftCard() throws Exception {
+    @Test public void canRedeemGiftCard() throws Exception {
         registerUser("aUser", "aPass");
         createCard("card1", 1000);
         String token = loginAndGetToken("aUser", "aPass");
@@ -70,7 +70,24 @@ public class GiftCardControllerTest {
         assertEquals(1000, balanceMap.get("balance"));
     }
 
-    @Test public void test04CanNotRedeemAlreadyOwnedCard() throws Exception {
+    @Test public void cannotRedeemWithInvalidTokenHeader() throws Exception {
+        registerUser("user", "pass");
+        createCard("card1", 1000);
+        mockMvc.perform(post("/api/giftcards/card1/redeem")
+                        .header("Authorization", "Bearer not-a-uuid"))
+                .andDo(print())
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test public void cannotRedeemWithMissingAuthorization() throws Exception {
+        registerUser("user", "pass");
+        createCard("card1", 1000);
+        mockMvc.perform(post("/api/giftcards/card1/redeem"))
+                .andDo(print())
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test public void canNotRedeemAlreadyOwnedCard() throws Exception {
         registerUser("UserA", "PassA");
         registerUser("UserB", "PassB");
         createCard("card1", 1000);
@@ -84,7 +101,7 @@ public class GiftCardControllerTest {
         redeemFailing(tokenB, "card1");
     }
 
-    @Test public void test05CanChargeCard() throws Exception {
+    @Test public void canChargeCard() throws Exception {
         registerUser("aUser", "aPass");
         createCard("card1", 1000);
         // Asumimos que los merchants están pre-cargados o validados de otra forma,
@@ -99,6 +116,58 @@ public class GiftCardControllerTest {
         assertEquals(800, response.get("balance"));
     }
 
+    @Test public void chargeFailsIfCardNotRedeemed() throws Exception {
+        registerUser("user", "pass");
+        createCard("card1", 1000);
+        mockMvc.perform(post("/api/giftcards/card1/charge")
+                        .param("merchant", "AnyMerchant")
+                        .param("amount", "200")
+                        .param("description", "Books"))
+                .andDo(print())
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test public void chargeFailsIfInsufficientBalance() throws Exception {
+        registerUser("user", "pass");
+        createCard("card1", 100);
+        String token = loginAndGetToken("user", "pass");
+        redeem(token, "card1");
+
+        mockMvc.perform(post("/api/giftcards/card1/charge")
+                        .param("merchant", "AnyMerchant")
+                        .param("amount", "200")
+                        .param("description", "BigPurchase"))
+                .andDo(print())
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test public void detailsReturnMovementsForOwner() throws Exception {
+        registerUser("user", "pass");
+        createCard("card1", 1000);
+        String token = loginAndGetToken("user", "pass");
+        redeem(token, "card1");
+        charge("AnyMerchant", "card1", 200, "Books");
+        charge("AnyMerchant", "card1", 100, "Music");
+
+        Map<String, Object> response = details(token, "card1");
+        assertEquals(2, ((java.util.List<?>) response.get("movements")).size());
+    }
+
+    @Test public void tokenExpiresAfter15Minutes() throws Exception {
+        LocalDateTime now = LocalDateTime.now();
+        when(clock.now()).thenReturn(now, now.plusMinutes(16));
+
+        registerUser("user", "pass");
+        createCard("card1", 1000);
+
+        String token = loginAndGetToken("user", "pass");
+
+        mockMvc.perform(post("/api/giftcards/card1/redeem")
+                        .header("Authorization", "Bearer " + token))
+                .andDo(print())
+                .andExpect(status().isInternalServerError());
+    }
+
     // --- HELPERS (Métodos privados para HTTP requests, igual que antes) ---
 
     private String loginAndGetToken(String user, String pass) throws Exception {
@@ -110,6 +179,17 @@ public class GiftCardControllerTest {
                 mockMvc.perform(post("/api/giftcards/login")
                                 .param("user", user)
                                 .param("pass", pass))
+                        .andDo(print())
+                        .andExpect(status().is(200))
+                        .andReturn().getResponse().getContentAsString(),
+                HashMap.class
+        );
+    }
+
+    private Map<String, Object> details(String token, String cardId) throws Exception {
+        return new ObjectMapper().readValue(
+                mockMvc.perform(get("/api/giftcards/" + cardId + "/details")
+                                .header("Authorization", "Bearer " + token))
                         .andDo(print())
                         .andExpect(status().is(200))
                         .andReturn().getResponse().getContentAsString(),
