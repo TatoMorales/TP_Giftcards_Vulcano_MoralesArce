@@ -28,21 +28,24 @@ public class GiftCardController {
     }
 
     @PostMapping("/{cardId}/redeem")
-    public ResponseEntity<String> redeemCard(@RequestHeader("Authorization") String header, @PathVariable String cardId) {
+    public ResponseEntity<String> redeemCard(@RequestHeader(value = "Authorization", required = false) String header,
+                                             @PathVariable String cardId) {
         UUID token = extractToken(header);
         giftCardFacade.redeem(token, cardId);
         return ResponseEntity.ok("Card redeemed");
     }
 
     @GetMapping("/{cardId}/balance")
-    public ResponseEntity<Map<String, Object>> balance(@RequestHeader("Authorization") String header, @PathVariable String cardId) {
+    public ResponseEntity<Map<String, Object>> balance(@RequestHeader(value = "Authorization", required = false) String header,
+                                                       @PathVariable String cardId) {
         UUID token = extractToken(header);
         int balance = giftCardFacade.balance(token, cardId);
         return ResponseEntity.ok(Map.of("balance", balance));
     }
 
     @GetMapping("/{cardId}/details")
-    public ResponseEntity<Map<String, Object>> details(@RequestHeader("Authorization") String header, @PathVariable String cardId) {
+    public ResponseEntity<Map<String, Object>> details(@RequestHeader(value = "Authorization", required = false) String header,
+                                                       @PathVariable String cardId) {
         UUID token = extractToken(header);
         List<String> movements = giftCardFacade.details(token, cardId);
         return ResponseEntity.ok(Map.of("movements", movements));

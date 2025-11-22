@@ -19,6 +19,7 @@ public class GiftCardFacade {
     // Estoy manteniendo las sesiones en memoria - PREGUNTAR A EMILIO
     private Map<UUID, UserSession> sessions = new HashMap<>();
 
+    @Transactional(readOnly = true)
     public UUID login(String userKey, String pass) {
         UserVault user = userService.findByName(userKey);
         // validar la password
@@ -37,6 +38,7 @@ public class GiftCardFacade {
         // Por ser @Transactional, el cambio se guarda solo al salir del metodo
     }
 
+    @Transactional(readOnly = true)
     public int balance(UUID token, String cardId) {
         GiftCard card = giftCardService.findByCardId(cardId);
         validateOwnership(token, card);
@@ -49,6 +51,7 @@ public class GiftCardFacade {
         giftCardService.findByCardId(cardId).charge(amount, description);
     }
 
+    @Transactional(readOnly = true)
     public List<String> details(UUID token, String cardId) {
         GiftCard card = giftCardService.findByCardId(cardId);
         validateOwnership(token, card);
