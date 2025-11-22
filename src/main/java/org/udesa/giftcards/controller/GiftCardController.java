@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-// Asegúrate de importar tus modelos y excepciones
 import org.udesa.giftcards.model.GiftCardFacade;
 
 import java.util.List;

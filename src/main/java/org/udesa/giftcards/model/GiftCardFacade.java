@@ -8,28 +8,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@Service // <--- Importante para que el Controller lo encuentre
+@Service
 @Transactional
 public class GiftCardFacade {
-
     @Autowired private UserService userService;
     @Autowired private GiftCardService giftCardService;
+    @Autowired private MerchantService merchantService;
     @Autowired private Clock clock;
 
-    // Mantenemos sesiones en memoria (esto es aceptable para este TP usualmente)
-    // o podrías crear una entidad Session y un SessionRepository si te piden persistencia total.
+    // Estoy manteniendo las sesiones en memoria - PREGUNTAR A EMILIO
     private Map<UUID, UserSession> sessions = new HashMap<>();
 
     public UUID login(String userKey, String pass) {
-        // 1. Usamos UserService para buscar en DB
         UserVault user = userService.findByName(userKey);
-
-        // 2. Validamos password
+        // validar la password
         if (!user.getPassword().equals(pass)) {
             throw new RuntimeException("InvalidUser");
         }
-
-        // 3. Creamos sesión
+        // Creo una session
         UUID token = UUID.randomUUID();
         sessions.put(token, new UserSession(userKey, clock));
         return token;
@@ -37,12 +33,8 @@ public class GiftCardFacade {
 
     public void redeem(UUID token, String cardId) {
         String username = findUser(token);
-        // Buscamos la tarjeta en DB usando el servicio
-        GiftCard card = giftCardService.findByCardId(cardId);
-
-        // Operamos sobre el dominio
-        card.redeem(username);
-        // Al ser @Transactional, el cambio se guarda solo al salir del método
+        giftCardService.findByCardId(cardId).redeem(username);
+        // Por ser @Transactional, el cambio se guarda solo al salir del metodo
     }
 
     public int balance(UUID token, String cardId) {
@@ -52,9 +44,9 @@ public class GiftCardFacade {
     }
 
     public void charge(String merchant, String cardId, int amount, String description) {
-        // Aquí podrías validar el Merchant si tuvieras un MerchantService
-        GiftCard card = giftCardService.findByCardId(cardId);
-        card.charge(amount, description);
+        if (!merchantService.exists(merchant)) {throw new RuntimeException("UnknownMerchant");}
+        merchantService.findByName(merchant);
+        giftCardService.findByCardId(cardId).charge(amount, description);
     }
 
     public List<String> details(UUID token, String cardId) {
