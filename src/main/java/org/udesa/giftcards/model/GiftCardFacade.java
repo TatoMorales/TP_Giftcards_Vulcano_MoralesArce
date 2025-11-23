@@ -26,7 +26,7 @@ public class GiftCardFacade {
         if (!user.getPassword().equals(pass)) {
             throw new RuntimeException("InvalidUser");
         }
-        // Creo una session
+
         UUID token = UUID.randomUUID();
         sessions.put(token, new UserSession(userKey, clock));
         return token;

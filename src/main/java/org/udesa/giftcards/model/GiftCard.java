@@ -20,7 +20,7 @@ public class GiftCard extends ModelEntity {
     @ElementCollection
     private List<String> charges = new ArrayList<>();
 
-    public GiftCard() {} // Hay que declarar un constructor vacío siempre
+    public GiftCard() {}
 
     public GiftCard( String id, int initialBalance ) {
         this.cardId = id;
@@ -40,7 +40,6 @@ public class GiftCard extends ModelEntity {
         return this;
     }
 
-    // proyectors
     public boolean owned() { return owner != null; }
     public boolean isOwnedBy(String aPossibleOwner) { return owner.equals(aPossibleOwner); }
 }

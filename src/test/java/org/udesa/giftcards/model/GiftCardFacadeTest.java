@@ -18,12 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @Transactional
 public class GiftCardFacadeTest {
-
     @Autowired private GiftCardFacade facade;
     @Autowired private UserService userService;
     @Autowired private GiftCardService giftCardService;
+    @Autowired private MerchantService merchantService;
 
-    // Mockeamos el reloj para poder manipular el tiempo en los tests
     @MockBean private Clock clock;
 
     @BeforeEach public void setup() {
@@ -31,18 +30,16 @@ public class GiftCardFacadeTest {
         setupBaseData();
     }
 
-    // Para poblar la DB con usuarios y giftcards
     private void setupBaseData() {
         userService.save(new UserVault("Bob", "BobPass"));
         userService.save(new UserVault("Kevin", "KevPass"));
         giftCardService.save(new GiftCard("GC1", 10));
         giftCardService.save(new GiftCard("GC2", 5));
-
-        // Nota: No guardamos Merchants porque tu implementación actual no los valida en DB
+        merchantService.save(new MerchantVault("M1"));
     }
 
     @Test public void test01userCanOpenASession() {
-        assertNotNull( facade.login( "Bob", "BobPass" ) );
+        assertNotNull(facade.login( "Bob", "BobPass"));
     }
 
     @Test public void test02unkownUserCannotOpenASession() {
@@ -57,20 +54,17 @@ public class GiftCardFacadeTest {
 
     @Test public void test04userCannotCheckOnAlienCard() {
         UUID token = facade.login( "Bob", "BobPass" );
-
         assertThrows( RuntimeException.class, () -> facade.balance( token, "GC1" ) );
     }
 
     @Test public void test05userCanRedeemACard() {
         UUID token = facade.login( "Bob", "BobPass" );
-
         facade.redeem( token, "GC1" );
         assertEquals( 10, facade.balance( token, "GC1" ) );
     }
 
     @Test public void test06userCanRedeemASecondCard() {
         UUID token = facade.login( "Bob", "BobPass" );
-
         facade.redeem( token, "GC1" );
         facade.redeem( token, "GC2" );
 
@@ -89,68 +83,53 @@ public class GiftCardFacadeTest {
         assertEquals( 5, facade.balance( kevinsToken, "GC2" ) );
     }
 
-    /*
-    @Test public void unknownMerchantCantCharge() {
+    @Test public void test08UnknownMerchantCantCharge() {
         assertThrows( RuntimeException.class, () -> facade.charge( "Mx", "GC1", 2, "UnCargo" ) );
     }
-    */
 
-    @Test public void tes08merchantCantChargeUnredeemedCard() {
-        // Este test sigue pasando porque la validación de 'owned()' está dentro de GiftCard.charge()
+    @Test public void test09MerchantCantChargeUnredeemedCard() {
         assertThrows( RuntimeException.class, () -> facade.charge( "M1", "GC1", 2, "UnCargo" ) );
     }
 
-    @Test public void test09MerchantCanChargeARedeemedCard() {
+    @Test public void test10MerchantCanChargeARedeemedCard() {
         UUID token = facade.login( "Bob", "BobPass" );
-
         facade.redeem( token, "GC1" );
-        facade.charge( "M1", "GC1", 2, "UnCargo" );
 
+        facade.charge( "M1", "GC1", 2, "UnCargo" );
         assertEquals( 8, facade.balance( token, "GC1" ) );
     }
 
-    @Test public void test10MerchantCannotOverchargeACard() {
+    @Test public void test11MerchantCannotOverchargeACard() {
         UUID token = facade.login( "Bob", "BobPass" );
-
         facade.redeem( token, "GC1" );
         assertThrows( RuntimeException.class, () -> facade.charge( "M1", "GC1", 11, "UnCargo" ) );
     }
 
-    @Test public void test11UserCanCheckHisEmptyCharges() {
+    @Test public void test12UserCanCheckHisEmptyCharges() {
         UUID token = facade.login( "Bob", "BobPass" );
-
         facade.redeem( token, "GC1" );
-
         assertTrue( facade.details( token, "GC1" ).isEmpty() );
     }
 
-    @Test public void test12UserCanCheckHisCharges() {
+    @Test public void test13UserCanCheckHisCharges() {
         UUID token = facade.login( "Bob", "BobPass" );
-
         facade.redeem( token, "GC1" );
         facade.charge( "M1", "GC1", 2, "UnCargo" );
-
         assertEquals( "UnCargo", facade.details( token, "GC1" ).getLast() );
     }
 
-    @Test public void test13userCannotCheckOthersCharges() {
+    @Test public void test14userCannotCheckOthersCharges() {
         facade.redeem( facade.login( "Bob", "BobPass" ), "GC1" );
-
         UUID token = facade.login( "Kevin", "KevPass" );
-
         assertThrows( RuntimeException.class, () -> facade.details( token, "GC1" ) );
     }
 
-    @Test public void test14tokenExpires() {
-        // Configuramos el comportamiento del mock para este test específico
-        // 1ra llamada (login): devuelve ahora
-        // 2da llamada (check): devuelve ahora + 16 minutos
+    @Test public void test15tokenExpires() {
         when(clock.now())
-                .thenReturn(LocalDateTime.now())
-                .thenReturn(LocalDateTime.now().plusMinutes(16));
+                .thenReturn(LocalDateTime.now()) // 1er llamada devuelve tiempo actuañ
+                .thenReturn(LocalDateTime.now().plusMinutes(16)); //2da llamada ya expira
 
         UUID token = facade.login( "Kevin", "KevPass" );
-
         assertThrows( RuntimeException.class, () -> facade.redeem( token, "GC1" ) );
     }
 }

@@ -13,22 +13,16 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/giftcards") // la ruta para los http requests
 public class GiftCardController {
-
     @Autowired private GiftCardFacade giftCardFacade;
-    // NOTA: Si decidiste no usar Facade y llamar directo a los servicios,
-    // inyecta aquí UserService y GiftCardService.
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestParam String user, @RequestParam String pass) {
-        // Delega la lógica al modelo/facade
         UUID token = giftCardFacade.login(user, pass);
-
-        // Retorna el JSON esperado por el test
         return ResponseEntity.ok(Map.of("token", token.toString()));
     }
 
     @PostMapping("/{cardId}/redeem")
-    public ResponseEntity<String> redeemCard(@RequestHeader(value = "Authorization", required = false) String header,
+    public ResponseEntity<String> redeemCard(@RequestHeader(value = "Authorization") String header,
                                              @PathVariable String cardId) {
         UUID token = extractToken(header);
         giftCardFacade.redeem(token, cardId);
@@ -36,7 +30,7 @@ public class GiftCardController {
     }
 
     @GetMapping("/{cardId}/balance")
-    public ResponseEntity<Map<String, Object>> balance(@RequestHeader(value = "Authorization", required = false) String header,
+    public ResponseEntity<Map<String, Object>> balance(@RequestHeader(value = "Authorization") String header,
                                                        @PathVariable String cardId) {
         UUID token = extractToken(header);
         int balance = giftCardFacade.balance(token, cardId);
@@ -44,7 +38,7 @@ public class GiftCardController {
     }
 
     @GetMapping("/{cardId}/details")
-    public ResponseEntity<Map<String, Object>> details(@RequestHeader(value = "Authorization", required = false) String header,
+    public ResponseEntity<Map<String, Object>> details(@RequestHeader(value = "Authorization") String header,
                                                        @PathVariable String cardId) {
         UUID token = extractToken(header);
         List<String> movements = giftCardFacade.details(token, cardId);
@@ -64,7 +58,6 @@ public class GiftCardController {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> handleRuntimeExceptions(RuntimeException e) {
-        // Convierte las RuntimeException en un Status 500 con el mensaje de error.
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
 

@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class MerchantService extends ModelService<MerchantVault, MerchantRepository> {
-
+    private final String invalidMerchantException = "Merchant no registrado";
     @Override
     protected void updateData(MerchantVault existingObject, MerchantVault updatedObject) {
         existingObject.setName(updatedObject.getName());
@@ -14,7 +14,7 @@ public class MerchantService extends ModelService<MerchantVault, MerchantReposit
     @Transactional(readOnly = true)
     public MerchantVault findByName(String name) {
         return repository.findByName(name)
-                .orElseThrow(() -> new RuntimeException("InvalidMerchant"));
+                .orElseThrow(() -> new RuntimeException(invalidMerchantException));
     }
 
     @Transactional(readOnly = true)

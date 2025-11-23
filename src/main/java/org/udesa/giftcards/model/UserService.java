@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService extends ModelService<UserVault, UserRepository> {
+    private final String InvalidUserException = "El usuario no existe";
 
     @Override protected void updateData(UserVault existingObject, UserVault updatedObject) {
         existingObject.setName(updatedObject.getName());
@@ -15,6 +16,6 @@ public class UserService extends ModelService<UserVault, UserRepository> {
     public UserVault findByName(String name) {
         // Tira una exception si no existe
         return repository.findByName(name)
-                .orElseThrow(() -> new RuntimeException("InvalidUser"));
+                .orElseThrow(() -> new RuntimeException(InvalidUserException));
     }
 }
